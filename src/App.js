@@ -2,6 +2,32 @@ import logo from "./logo.svg";
 import "./App.css";
 import { useState } from "react";
 
+function Create(props) {
+  return (
+    <article>
+      <h2>Create</h2>
+      <form
+        onSubmit={(event) => {
+          event.preventDefault();
+          const title = event.target.title.value;
+          const desc = event.target.desc.value;
+          props.onCreate(title, desc);
+        }}
+      >
+        <p>
+          <input name="title" type="text" placeholder="title"></input>
+        </p>
+        <p>
+          <textarea name="desc" placeholder="desc"></textarea>
+        </p>
+        <p>
+          <input type="submit" value="Create"></input>
+        </p>
+      </form>
+    </article>
+  );
+}
+
 function Header(props) {
   // props: 부모 컴포넌트에서 자식 컴포넌트로 전달되는 데이터
   // props : Object {title: "daiseek"}
@@ -72,11 +98,11 @@ function Article(props) {
 function App() {
   // URL로 매핑해주기 위한 데이터
   // array에 json 형식으로 저장?
-  const topics = [
+  const [topics, setTopics] = useState([
     { id: 1, title: "HTML", desc: "HTML is ..." },
     { id: 2, title: "CSS", desc: "CSS is ..." },
     { id: 3, title: "JavaScript", desc: "JavaScript is ..." },
-  ];
+  ]);
 
   // const _mode = useState("hello");
   // const mode = _mode[0];
@@ -88,8 +114,23 @@ function App() {
 
   const [id, setId] = useState(null);
 
+  const [nextId, setNextId] = useState(4);
+
   if (mode === "Welcome") {
     content = <Article title="Hello" desc="React"></Article>;
+  } else if (mode === "Create") {
+    content = (
+      <Create
+        onCreate={(_title, _desc) => {
+          const newTopic = { id: nextId, title: _title, desc: _desc };
+          const newTopics = [...topics, newTopic]; // topics를 복사
+          setTopics(newTopics);
+          setMode("Read");
+          setId(nextId);
+          setNextId(nextId + 1);
+        }}
+      ></Create>
+    );
   } else if (mode === "Read") {
     let title,
       desc = null;
@@ -100,6 +141,7 @@ function App() {
         desc = topics[i].desc;
       }
     }
+
     content = <Article title="Read" desc={desc}></Article>;
   }
 
@@ -121,8 +163,24 @@ function App() {
         }}
       ></Nav>
       {content}
+      <a
+        href="/create"
+        onClick={(event) => {
+          event.preventDefault();
+          setMode("Create");
+        }}
+      >
+        Create
+      </a>
     </div>
   );
 }
 
 export default App;
+
+// const [value, setValue] = useState(PRIMITIVE);
+// 기존처럼 사용
+
+// const [value, setValue] = useState(Object);
+// object, array인 경우 다른 방식으로 사용, 기존 객체를 복사해서 사용
+// -> 더 찾아보기
