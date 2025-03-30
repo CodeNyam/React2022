@@ -13,7 +13,10 @@ function Header(props) {
         <a
           href="/"
           onClick={function (event) {
+            // 이벤트 새로고침을 막는 핸들러
             event.preventDefault();
+
+            // App 함수에게 받은 props.onChangeMode 함수가 호출
             props.onChangeMode();
           }}
         >
@@ -36,7 +39,10 @@ function Nav(props) {
           id={t.id}
           href={"/read/" + t.id}
           onClick={(event) => {
+            // 이벤트 새로고침을 막는 핸들러
             event.preventDefault();
+
+            // App 함수에게 받은 props.onChangeMode 함수가 호출
             props.onChangeMode(Number(event.target.id));
           }}
         >
@@ -86,15 +92,15 @@ function App() {
     content = <Article title="Hello" desc="React"></Article>;
   } else if (mode === "Read") {
     let title,
-      body = null;
+      desc = null;
     for (let i = 0; i < topics.length; i++) {
-      console.log("topics[i].id : ", topics[i].id);
       if (topics[i].id === id) {
-        let title = topics[i].title;
-        body = topics[i].body;
+        console.log("topics[i].id : ", topics[i].id);
+        title = topics[i].title;
+        desc = topics[i].desc;
       }
     }
-    content = <Article title="Read" body={body}></Article>;
+    content = <Article title="Read" desc={desc}></Article>;
   }
 
   return (
