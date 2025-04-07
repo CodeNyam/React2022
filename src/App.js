@@ -2,6 +2,45 @@ import logo from "./logo.svg";
 import "./App.css";
 import { useState } from "react";
 
+function Update(props) {
+  const [title, setTitle] = useState(props.title || "");
+  const [desc, setDesc] = useState(props.desc || "");
+  return (
+    <article>
+      <h2>Update</h2>
+      <form
+        onSubmit={(event) => {
+          event.preventDefault();
+          const title = event.target.title.value;
+          const desc = event.target.desc.value;
+          props.onUpdate(title, desc);
+        }}
+      >
+        <p>
+          <input
+            name="title"
+            type="text"
+            placeholder="title"
+            value={title}
+            onChange={(event) => setTitle(event.target.value)}
+          />
+        </p>
+        <p>
+          <textarea
+            name="desc"
+            placeholder="desc"
+            value={desc}
+            onChange={(event) => setDesc(event.target.value)}
+          />
+        </p>
+        <p>
+          <input type="submit" value="Update" />
+        </p>
+      </form>
+    </article>
+  );
+}
+
 function Create(props) {
   return (
     <article>
@@ -15,13 +54,13 @@ function Create(props) {
         }}
       >
         <p>
-          <input name="title" type="text" placeholder="title"></input>
+          <input name="title" type="text" placeholder="title" />
         </p>
         <p>
-          <textarea name="desc" placeholder="desc"></textarea>
+          <textarea name="desc" placeholder="desc" />
         </p>
         <p>
-          <input type="submit" value="Create"></input>
+          <input type="submit" value="Create" />
         </p>
       </form>
     </article>
@@ -29,20 +68,13 @@ function Create(props) {
 }
 
 function Header(props) {
-  // props: 부모 컴포넌트에서 자식 컴포넌트로 전달되는 데이터
-  // props : Object {title: "daiseek"}
-  // props.title :
-  console.log("props : ", props, "props.title : ", props.title);
   return (
     <header>
       <h1>
         <a
           href="/"
-          onClick={function (event) {
-            // 이벤트 새로고침을 막는 핸들러
+          onClick={(event) => {
             event.preventDefault();
-
-            // App 함수에게 받은 props.onChangeMode 함수가 호출
             props.onChangeMode();
           }}
         >
@@ -54,8 +86,6 @@ function Header(props) {
 }
 
 function Nav(props) {
-  // App.js:30
-  // Each child in a list should have a unique "key" prop.
   const lis = [];
   for (let i = 0; i < props.topics.length; i++) {
     let t = props.topics[i];
@@ -65,16 +95,11 @@ function Nav(props) {
           id={t.id}
           href={"/read/" + t.id}
           onClick={(event) => {
-            // 이벤트 새로고침을 막는 핸들러
             event.preventDefault();
-
-            // App 함수에게 받은 props.onChangeMode 함수가 호출
             props.onChangeMode(Number(event.target.id));
           }}
         >
           {t.title}
-          {/* 여기서 t.id는 태그의 속성에 따라 문자열로 전달된다. 
-          따라서 형변환을 해주어야 한다. */}
         </a>
       </li>
     );
@@ -96,91 +121,130 @@ function Article(props) {
 }
 
 function App() {
-  // URL로 매핑해주기 위한 데이터
-  // array에 json 형식으로 저장?
   const [topics, setTopics] = useState([
     { id: 1, title: "HTML", desc: "HTML is ..." },
     { id: 2, title: "CSS", desc: "CSS is ..." },
     { id: 3, title: "JavaScript", desc: "JavaScript is ..." },
   ]);
-
-  // const _mode = useState("hello");
-  // const mode = _mode[0];
-  // const setMode = _mode[1];
-
   const [mode, setMode] = useState("Welcome");
-
-  let content = null;
-
   const [id, setId] = useState(null);
-
   const [nextId, setNextId] = useState(4);
 
+  let content = null;
+  let contextControl = null;
+
   if (mode === "Welcome") {
-    content = <Article title="Hello" desc="React"></Article>;
+    content = <Article title="Welcome" desc="React"></Article>;
+  } else if (mode === "Update") {
+    let title,
+      desc = null;
+    for (let i = 0; i < topics.length; i++) {
+      if (topics[i].id === id) {
+        title = topics[i].title;
+        desc = topics[i].desc;
+      }
+    }
+    content = (
+      <Update
+        title={title}
+        desc={desc}
+        onUpdate={(newTitle, newDesc) => {
+          const updatedTopics = topics.map((topic) =>
+            topic.id === id
+              ? { ...topic, title: newTitle, desc: newDesc }
+              : topic
+          );
+          setTopics(updatedTopics);
+          setMode("Read");
+        }}
+      />
+    );
   } else if (mode === "Create") {
     content = (
       <Create
-        onCreate={(_title, _desc) => {
-          const newTopic = { id: nextId, title: _title, desc: _desc };
-          const newTopics = [...topics, newTopic]; // topics를 복사
+        onCreate={(newTitle, newDesc) => {
+          const newTopic = { id: nextId, title: newTitle, desc: newDesc };
+          const newTopics = [...topics, newTopic];
           setTopics(newTopics);
           setMode("Read");
           setId(nextId);
           setNextId(nextId + 1);
         }}
-      ></Create>
+      />
     );
   } else if (mode === "Read") {
     let title,
       desc = null;
     for (let i = 0; i < topics.length; i++) {
       if (topics[i].id === id) {
-        console.log("topics[i].id : ", topics[i].id);
         title = topics[i].title;
         desc = topics[i].desc;
       }
     }
 
-    content = <Article title="Read" desc={desc}></Article>;
+    content = <Article title={title} desc={desc} />;
+
+    contextControl = (
+      <>
+        <li>
+          <a
+            href={`/update/${id}`}
+            onClick={(event) => {
+              event.preventDefault();
+              setMode("Update");
+            }}
+          >
+            Update
+          </a>
+        </li>
+        <li>
+          <input
+            type="button"
+            value="Delete"
+            onClick={(event) => {
+              const newTopics = topics.filter((topic) => topic.id !== id);
+              setTopics(newTopics);
+              setMode("Welcome");
+              setId(null);
+            }}
+          />
+        </li>
+      </>
+    );
   }
 
   return (
     <div>
-      {/* 사용자 정의 태그 */}
-      {/* 함수형 컴포넌트 사용 */}
       <Header
         title="daiseek"
         onChangeMode={() => {
           setMode("Welcome");
         }}
-      ></Header>
+      />
       <Nav
         topics={topics}
         onChangeMode={(id) => {
           setMode("Read");
           setId(id);
         }}
-      ></Nav>
+      />
       {content}
-      <a
-        href="/create"
-        onClick={(event) => {
-          event.preventDefault();
-          setMode("Create");
-        }}
-      >
-        Create
-      </a>
+      <ul>
+        <li>
+          <a
+            href="/create"
+            onClick={(event) => {
+              event.preventDefault();
+              setMode("Create");
+            }}
+          >
+            Create
+          </a>
+        </li>
+        {contextControl}
+      </ul>
     </div>
   );
 }
 
 export default App;
-
-// const [value, setValue] = useState(PRIMITIVE);
-// 기존처럼 사용
-
-// const [value, setValue] = useState(Object);
-// object, array인 경우 다른 방식으로 사용, 기존 객체를 복사해서 사용
-// -> 더 찾아보기
